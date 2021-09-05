@@ -39,6 +39,25 @@ namespace Dapper.Logging
             return services;
         }
         
+        public static IServiceCollection AddDbConnectionFactory(
+            this IServiceCollection services, 
+            Func<IServiceProvider,string, DbConnection> factory,
+            Func<DbLoggingConfigurationBuilder, DbLoggingConfigurationBuilder> config = null,
+            ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        {
+            var builder = new DbLoggingConfigurationBuilder();
+            builder = config?.Invoke(builder) ?? builder;
+
+            object FactoryWrapper(IServiceProvider x) => 
+                new ContextlessLoggingFactory(
+                    x.GetService<ILogger<IDbConnectionFactory>>(), 
+                    builder.Build(),
+                    (connString) => factory(x,connString));
+
+            services.TryAdd(new ServiceDescriptor(typeof(IDbConnectionFactory), FactoryWrapper, lifetime));
+            return services;
+        }
+        
         /// <summary>
         /// Registers DbConnectionFactory (with context logging) in the IoC container 
         /// </summary>

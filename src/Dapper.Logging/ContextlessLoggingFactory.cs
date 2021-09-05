@@ -10,7 +10,8 @@ namespace Dapper.Logging
     {
         private readonly LoggingHook<Empty> _hooks;
         private readonly WrappedConnectionFactory<Empty> _factory;
-        
+        private readonly WrappedConnectionFactory<Empty> _connStrFactory;
+
         public ContextlessLoggingFactory(
             ILogger<IDbConnectionFactory> logger, 
             DbLoggingConfiguration config, 
@@ -18,6 +19,15 @@ namespace Dapper.Logging
         {
             _hooks = new LoggingHook<Empty>(logger, config);
             _factory = new WrappedConnectionFactory<Empty>(factory);
+        }
+        
+        public ContextlessLoggingFactory(
+            ILogger<IDbConnectionFactory> logger, 
+            DbLoggingConfiguration config, 
+            Func<string,DbConnection> factory)
+        {
+            _hooks = new LoggingHook<Empty>(logger, config);
+            _connStrFactory = new WrappedConnectionFactory<Empty>(factory);
         }
         
         [Obsolete]
@@ -32,5 +42,7 @@ namespace Dapper.Logging
         
         public DbConnection CreateConnection() => 
             _factory.CreateConnection(_hooks, Empty.Object);
+
+        public DbConnection CreateConnection(string connString) => _connStrFactory.CreateConnection(_hooks, Empty.Object,connString);
     }
 }
